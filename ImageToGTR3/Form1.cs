@@ -15,6 +15,8 @@ namespace ImageToGTR3
     public partial class Form1 : Form
     {
         private byte[] _streamBuffer;
+        List<Color> colorMapList = new List<Color>();
+        int ImageWidth;
         public Form1()
         {
             InitializeComponent();
@@ -64,33 +66,66 @@ namespace ImageToGTR3
             OpenFileDialog openFileDialog = new OpenFileDialog();
             openFileDialog.Filter = "Image files (*.png, *.tga) | *.png; *.tga";
             openFileDialog.RestoreDirectory = true;
-            openFileDialog.Multiselect = false;
+            openFileDialog.Multiselect = true;
             //openFileDialog.Title = Properties.FormStrings.Dialog_Title_Pack;
             if (openFileDialog.ShowDialog() == DialogResult.OK)
             {
-                try
+                List<string> FileNames = openFileDialog.FileNames.ToList();
+                progressBar1.Value = 0;
+                progressBar1.Maximum = FileNames.Count;
+                progressBar1.Visible = true;
+                foreach (String file in FileNames)
                 {
-                    string fileNameFull = openFileDialog.FileName;
-                    string fileName = Path.GetFileNameWithoutExtension(fileNameFull);
-                    string path = Path.GetDirectoryName(fileNameFull);
-                    fileName = Path.Combine(path, fileName);
-                    ImageMagick.MagickImage image = new ImageMagick.MagickImage(fileNameFull, ImageMagick.MagickFormat.Tga);
-                    if (checkBox_RGB_BRG.Checked)
+                    progressBar1.Value++;
+                    try
                     {
+                        //string fileNameFull = openFileDialog.FileName;
+                        string fileNameFull = file;
+                        string fileName = Path.GetFileNameWithoutExtension(fileNameFull);
+                        string path = Path.GetDirectoryName(fileNameFull);
+                        //fileName = Path.Combine(path, fileName);
+                        int RealWidth = -1;
+                        using (var fileStream = File.OpenRead(fileNameFull)) 
+                        {
+                            _streamBuffer = new byte[fileStream.Length];
+                            fileStream.Read(_streamBuffer, 0, (int)fileStream.Length);
+
+                            Header header = new Header(_streamBuffer);
+                            ImageDescription imageDescription = new ImageDescription(_streamBuffer, header.GetImageIDLength());
+                            RealWidth = imageDescription.GetRealWidth();
+                        }
+
+                        ImageMagick.MagickImage image = new ImageMagick.MagickImage(fileNameFull, ImageMagick.MagickFormat.Tga);
+                        image.Format = ImageMagick.MagickFormat.Png32;
+                        if(RealWidth>0 && RealWidth != image.Width)
+                        {
+                            int height = image.Height;
+                            image = (ImageMagick.MagickImage)image.Clone(RealWidth, height);
+                        }
+
                         ImageMagick.IMagickImage Blue = image.Separate(ImageMagick.Channels.Blue).First();
                         ImageMagick.IMagickImage Red = image.Separate(ImageMagick.Channels.Red).First();
                         image.Composite(Red, ImageMagick.CompositeOperator.Replace, ImageMagick.Channels.Blue);
                         image.Composite(Blue, ImageMagick.CompositeOperator.Replace, ImageMagick.Channels.Red);
+
+                        //image.ColorType = ImageMagick.ColorType.Palette;
+                        path = Path.Combine(path, "Png");
+                        if (!Directory.Exists(path))
+                        {
+                            Directory.CreateDirectory(path);
+                        }
+                        string newFileName = Path.Combine(path, fileName + ".png");
+                        image.Write(newFileName);
+                        //Bitmap bitmap = image.ToBitmap();
+                        //panel1.BackgroundImage = bitmap;
                     }
-                    //image.ColorType = ImageMagick.ColorType.Palette;
-                    image.Write(fileName + "_.png");
-                    //Bitmap bitmap = image.ToBitmap();
-                    //panel1.BackgroundImage = bitmap;
+                    catch (Exception exp)
+                    {
+                        MessageBox.Show("Не верный формат исходного файла" + Environment.NewLine +
+                            exp);
+                    }
                 }
-                catch (Exception)
-                {
-                    MessageBox.Show("Не верный формат исходного файла");
-                }
+                progressBar1.Visible = false;
             }
         }
 
@@ -99,32 +134,83 @@ namespace ImageToGTR3
             OpenFileDialog openFileDialog = new OpenFileDialog();
             openFileDialog.Filter = "Image files (*.png) | *.png";
             openFileDialog.RestoreDirectory = true;
-            openFileDialog.Multiselect = false;
+            openFileDialog.Multiselect = true;
             //openFileDialog.Title = Properties.FormStrings.Dialog_Title_Pack;
             if (openFileDialog.ShowDialog() == DialogResult.OK)
             {
+                List<string> FileNames = openFileDialog.FileNames.ToList();
+                progressBar1.Value = 0;
+                progressBar1.Maximum = FileNames.Count;
+                progressBar1.Visible = true;
+                foreach (String file in FileNames)
+                {
+                    progressBar1.Value++;
+                    string fileNameFull = PngToTga(file);
+                    if (fileNameFull != null) ImageFix(fileNameFull);
+                }
+                progressBar1.Visible = false;
+            }
+        }
+
+        private string PngToTga(string fileNameFull)
+        {
+            if (File.Exists(fileNameFull))
+            {
+                colorMapList.Clear();
                 try
                 {
-                    string fileNameFull = openFileDialog.FileName;
+                    //string fileNameFull = openFileDialog.FileName;
                     string fileName = Path.GetFileNameWithoutExtension(fileNameFull);
                     string path = Path.GetDirectoryName(fileNameFull);
-                    fileName = Path.Combine(path, fileName);
+                    //fileName = Path.Combine(path, fileName);
                     ImageMagick.MagickImage image = new ImageMagick.MagickImage(fileNameFull);
                     ImageMagick.MagickImage image_temp = new ImageMagick.MagickImage(fileNameFull);
-                    //ImageMagick.MagickImage image = new ImageMagick.MagickImage(fileNameFull, ImageMagick.MagickFormat.Tga);
+                    ImageWidth = image.Width;
+                    int newWidth = ImageWidth;
+                    int newHeight = image.Height;
+                    while (newWidth % 16 != 0)
+                    {
+                        newWidth++;
+                    }
 
-                    //ushort[] p = { 0, 0, 300 };
-                    //image.GetPixels().SetPixel(0, 0, p);
+
+                    if (ImageWidth != newWidth)
+                    {
+                        //ImageMagick.MagickImage imageNew =
+                        //    new ImageMagick.MagickImage(fileNameFull);
+                        ////imageNew.ColorSpace = ImageMagick.ColorSpace.sRGB;
+                        ////imageNew.Format = ImageMagick.MagickFormat.Png;
+                        ////imageNew.Depth = 8;
+                        ////imageNew.ColorSpace = ImageMagick.ColorSpace.sRGB;
+                        ////image = (ImageMagick.MagickImage)image.Clone(newWidth, newHeight);
+                        ////image_temp = (ImageMagick.MagickImage)image_temp.Clone(newWidth, newHeight);
+                        ////imageNew.Composite(image, ImageMagick.CompositeOperator.Src);
+                        //ImageMagick.Drawables dr = new ImageMagick.Drawables();
+                        //dr.Rectangle(image.Width + 1, 0, newWidth, newHeight);
+                        //dr.FillOpacity(new ImageMagick.Percentage(100));
+                        //image = (ImageMagick.MagickImage)image.Clone(newWidth, newHeight);
+                        //image_temp = (ImageMagick.MagickImage)image_temp.Clone(newWidth, newHeight);
+                        //image.Draw();
+                        //image_temp.Draw();
+                        ////image = (ImageMagick.MagickImage)imageNew.Clone(newWidth, newHeight);
+                        //image_temp = (ImageMagick.MagickImage)imageNew.Clone(newWidth, newHeight);
+                        Bitmap bitmap = image.ToBitmap();
+                        Bitmap bitmapNew = new Bitmap(newWidth, newHeight);
+                        Graphics gfx = Graphics.FromImage(bitmapNew);
+                        gfx.DrawImage(bitmap, 0, 0, bitmap.Width, bitmap.Height);
+                        image = new ImageMagick.MagickImage(bitmapNew);
+                        image_temp = new ImageMagick.MagickImage(bitmapNew);
+                    }
                     image.ColorType = ImageMagick.ColorType.Palette;
-                    if (image.ColorSpace == ImageMagick.ColorSpace.Gray) 
+                    if (image.ColorSpace != ImageMagick.ColorSpace.sRGB)
                     {
                         image = image_temp;
                         //image.ColorSpace = ImageMagick.ColorSpace.sRGB;
                         ImageMagick.Pixel pixel = image.GetPixels().GetPixel(0, 0);
-                        ushort[] p ;
+                        ushort[] p;
                         if (pixel[2] > 256)
                         {
-                            if (pixel.Channels == 4) p = new ushort[] { pixel[0], pixel[1], (ushort)(pixel[2]-256), pixel[3] };
+                            if (pixel.Channels == 4) p = new ushort[] { pixel[0], pixel[1], (ushort)(pixel[2] - 256), pixel[3] };
                             else p = new ushort[] { pixel[0], pixel[1], (ushort)(pixel[2] - 256) };
                         }
                         else
@@ -132,79 +218,61 @@ namespace ImageToGTR3
                             if (pixel.Channels == 4) p = new ushort[] { pixel[0], pixel[1], (ushort)(pixel[2] + 256), pixel[3] };
                             else p = new ushort[] { pixel[0], pixel[1], (ushort)(pixel[2] + 256) };
                         }
-                        image.GetPixels().SetPixel(0,0, p);
+                        image.GetPixels().SetPixel(0, 0, p);
                         pixel = image.GetPixels().GetPixel(0, 0);
                         image.ColorType = ImageMagick.ColorType.Palette;
                         pixel = image.GetPixels().GetPixel(0, 0);
-                        if (image.ColorSpace == ImageMagick.ColorSpace.Gray)
+                        if (image.ColorSpace != ImageMagick.ColorSpace.sRGB)
                         {
-                            MessageBox.Show("Изображение не должно быть монохромным");
-                            return; 
+                            MessageBox.Show("Изображение не должно быть монохромным и должно быть в формате 32bit" +
+                                Environment.NewLine + fileNameFull);
+                            return null;
                         }
                     }
 
 
                     //image.Format = ImageMagick.MagickFormat.Tga;
-                    List<string> colorMapList= new List<string>();
+                    //List<string> colorMapList = new List<string>();
                     for (int i = 0; i < image.ColormapSize; i++)
                     {
-                        Color tempColor = image.GetColormap(i);
-                        colorMapList.Add(tempColor.ToArgb().ToString());
+
+                        colorMapList.Add(image.GetColormap(i));
+                        //Color tempColor = image.GetColormap(i);
+                        //colorMapList.Add(tempColor.ToArgb().ToString());
                         //Color tempColor2 = Color.FromArgb(Int32.Parse(colorMapList[i]));
                     }
-                    File.WriteAllLines(fileName + ".txt", colorMapList);
+                    //File.WriteAllLines(fileName + ".txt", colorMapList);
+                    path = Path.Combine(path, "Fix");
+                    if (!Directory.Exists(path))
+                    {
+                        Directory.CreateDirectory(path);
+                    }
+                    string newFileName = Path.Combine(path, fileName + ".tga");
+                    image.Write(newFileName, ImageMagick.MagickFormat.Tga);
+                    return newFileName;
 
-                    //ImageMagick.MagickColor color1 = image.GetColormap(1);
-                    //image.SetColormap(10, ImageMagick.MagickColor.FromRgba(1, 1, 1, 1));
-                    //image.SetColormap(1, color1);
-                    //color1 = ImageMagick.MagickColor.FromRgba(0, 0, 0, 0);
-                    //image.SetColormap(1, color1);
-                    //image.CycleColormap(11);
-                    //image.Write(fileName + ".tga", ImageMagick.MagickFormat.Tga);
-                    image.Write(fileName + ".tga", ImageMagick.MagickFormat.Tga);
-                    //image.Write(fileName + "t.png");
-                    //image.Write(fileName + "_.png");
-                    //Bitmap bitmap = image.ToBitmap();
-                    //panel1.BackgroundImage = bitmap;
                 }
-                catch (Exception)
+                catch (Exception exp)
                 {
-                    MessageBox.Show("Не верный формат исходного файла");
+                    MessageBox.Show("Не верный формат исходного файла" + Environment.NewLine +
+                            exp);
                 }
             }
+            return null;
         }
 
-        private void checkBox_32bit_CheckedChanged(object sender, EventArgs e)
+        private void ImageFix(string fileNameFull)
         {
-            checkBox_ARGB_BGRA.Enabled = checkBox_32bit.Checked;
-            groupBox_alphaChenel.Enabled = checkBox_32bit.Checked;
-            checkBox_RestoreFromTxt.Enabled = checkBox_32bit.Checked;
-            if (!checkBox_32bit.Checked) checkBox_ARGB_BGRA.Checked = false;
-        }
-
-        private void radioButton_BlackAlpha_CheckedChanged(object sender, EventArgs e)
-        {
-            label1.Enabled = radioButton_BlackAlpha.Checked;
-            numericUpDown1.Enabled = radioButton_BlackAlpha.Checked;
-        }
-
-        private void button_ImageFix_Click(object sender, EventArgs e)
-        {
-            OpenFileDialog openFileDialog = new OpenFileDialog();
-            openFileDialog.Filter = "TGA files (*.tga) | *.tga";
-            openFileDialog.RestoreDirectory = true;
-            openFileDialog.Multiselect = false;
-            //openFileDialog.Title = Properties.FormStrings.Dialog_Title_Pack;
-            if (openFileDialog.ShowDialog() == DialogResult.OK)
+            if (File.Exists(fileNameFull))
             {
                 try
                 {
-                    string fileNameFull = openFileDialog.FileName;
+                    //string fileNameFull = openFileDialog.FileName;
                     string fileName = Path.GetFileNameWithoutExtension(fileNameFull);
                     string path = Path.GetDirectoryName(fileNameFull);
-                    fileName = Path.Combine(path, fileName);
+                    //fileName = Path.Combine(path, fileName);
 
-                    ImageMagick.MagickImage image = new ImageMagick.MagickImage(fileNameFull, ImageMagick.MagickFormat.Tga);
+                    //ImageMagick.MagickImage image = new ImageMagick.MagickImage(fileNameFull, ImageMagick.MagickFormat.Tga);
 
                     // читаем картинку в массив
                     using (var fileStream = File.OpenRead(fileNameFull))
@@ -226,51 +294,29 @@ namespace ImageToGTR3
                         Footer footer = new Footer();
 
                         #region fix
-                        if (checkBox_ImageIDLength46.Checked)
-                        {
-                            header.SetImageIDLength(46);
-                            imageDescription.SetSize(46);
-                        }
+                        header.SetImageIDLength(46);
+                        imageDescription.SetSize(46, ImageWidth);
+                        //imageDescription.SetSize(46, header.Width);
+
                         int colorMapCount = ColorMap.ColorMapCount;
-                        if (checkBox_Color256.Checked) 
-                        {
-                            colorMapCount = 256;
-                            header.SetColorMapCount(colorMapCount);
-                            if (!checkBox_32bit.Checked) ColorMap.SetColorCount(colorMapCount);
-                        }
-                        if (checkBox_32bit.Checked)
-                        {
-                            bool argb_brga = checkBox_ARGB_BGRA.Checked;
-                            bool blackAlpha = radioButton_BlackAlpha.Checked;
-                            byte errorValue = (byte)numericUpDown1.Value;
-                            bool r = radioButton_RAlpha.Checked;
-                            bool g = radioButton_GAlpha.Checked;
-                            bool b = radioButton_BAlpha.Checked;
-                            bool firstСolor = radioButton_FirstСolor.Checked;
-                            bool lastСolor = radioButton_LastСolor.Checked;
-                            byte colorMapEntrySize = 32;
-                            if (checkBox_RestoreFromTxt.Checked)
-                            {
-                                List<string> colorMapListS = new List<string>();
-                                colorMapListS = File.ReadLines(fileName + ".txt").ToList();
+                        //if (checkBox_Color256.Checked && !checkBox_32bit.Checked)
+                        //{
+                        //    colorMapCount = 256;
+                        //    header.SetColorMapCount(colorMapCount);
+                        //    if (!checkBox_32bit.Checked) ColorMap.SetColorCount(colorMapCount);
+                        //}
+                        bool argb_brga = true;
+                        colorMapCount = 256;
+                        header.SetColorMapCount(colorMapCount);
+                        byte colorMapEntrySize = 32;
 
-                                List<Color> colorMapList = new List<Color>();
-                                foreach (string item in colorMapListS)
-                                {
-                                    int value = Int32.Parse(item);
-                                    colorMapList.Add(Color.FromArgb(value));
-                                }
-
-                                ColorMap.RestoreColor(colorMapList);
-                            }
-                            ColorMap.ColorsFix(argb_brga, blackAlpha, errorValue, r, g, b, firstСolor, lastСolor,
-                                colorMapCount, colorMapEntrySize);
-                            header.SetColorMapEntrySize(32);
-                        }
+                        ColorMap.RestoreColor(colorMapList);
+                        ColorMap.ColorsFix(argb_brga, colorMapCount, colorMapEntrySize);
+                        header.SetColorMapEntrySize(32);
                         #endregion
 
-                            int newLength = 18 + header.GetImageIDLength() + ColorMap._colorMap.Length + imageData._imageData.Length;
-                        if (checkBox_Footer.Checked) newLength = newLength + footer._footer.Length;
+                        int newLength = 18 + header.GetImageIDLength() + ColorMap._colorMap.Length + imageData._imageData.Length;
+                        //if (checkBox_Footer.Checked) newLength = newLength + footer._footer.Length;
                         byte[] newTGA = new byte[newLength];
 
                         header._header.CopyTo(newTGA, 0);
@@ -285,11 +331,13 @@ namespace ImageToGTR3
                         imageData._imageData.CopyTo(newTGA, offset);
                         offset = offset + imageData._imageData.Length;
 
-                        if (checkBox_Footer.Checked) footer._footer.CopyTo(newTGA, offset);
+                        //if (checkBox_Footer.Checked) footer._footer.CopyTo(newTGA, offset);
 
                         if (newTGA != null && newTGA.Length > 0)
                         {
-                            using (var fileStreamTGA = File.OpenWrite(fileName + "Fix.png"))
+                            string newFileName = Path.Combine(path, fileName + ".png");
+
+                            using (var fileStreamTGA = File.OpenWrite(newFileName))
                             {
                                 fileStreamTGA.Write(newTGA, 0, newTGA.Length);
                                 fileStreamTGA.Flush();
@@ -297,13 +345,23 @@ namespace ImageToGTR3
                         }
                     }
 
+                    try
+                    {
+                        File.Delete(fileNameFull);
+                    }
+                    catch (Exception)
+                    {
+                    }
+
                 }
-                catch (Exception)
+                catch (Exception exp)
                 {
-                    MessageBox.Show("Ошибка открытия файла");
+                    MessageBox.Show("Ошибка открытия файла" + Environment.NewLine +
+                            exp);
                 }
             }
         }
+
 
     }
 }

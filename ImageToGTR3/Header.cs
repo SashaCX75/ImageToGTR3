@@ -13,6 +13,8 @@ namespace ImageToGTR3
         public byte[] _header;
         int ColorMapCount;
         byte ColorMapEntrySize;
+        public int Width { get; }
+        public int Height { get;  }
 
         public Header(byte[] streamBuffer)
         {
@@ -21,6 +23,8 @@ namespace ImageToGTR3
             ImageIDLength = _header[0];
             ColorMapCount = BitConverter.ToUInt16(_header, 5);
             ColorMapEntrySize = _header[7];
+            Width = BitConverter.ToUInt16(_header, 12);
+            Height = BitConverter.ToUInt16(_header, 14);
 
             if (_header[1] != 1 || _header[2] != 1) throw new Exception("Не верный формат файла");
         }

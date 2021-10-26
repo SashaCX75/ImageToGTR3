@@ -56,7 +56,7 @@ namespace ImageToGTR3
             }
         }
 
-        private void ARGB_BGRA(bool blackAlpha, byte errorValue,bool r, bool g, bool b)
+        private void ARGB_BGRA()
         {
             for (int i = 0; i < Colors.Count; i++)
             {
@@ -69,49 +69,13 @@ namespace ImageToGTR3
                 G = (byte)(G * scale);
                 B = (byte)(B * scale);
 
-                if (blackAlpha)
-                {
-                    if (R < errorValue && G < errorValue && B < errorValue) A = 0;
-                }
-                if (r) A = R;
-                if (g) A = G;
-                if (b) A = B;
-
                 Colors[i] = Color.FromArgb(R, G, B, A);
             }
         }
-        private void SetTransparent(bool blackAlpha, byte errorValue, bool r, bool g, bool b)
+
+        public void ColorsFix(bool argb_brga, int colorMapCount, byte colorMapEntrySize)
         {
-            for (int i = 0; i < Colors.Count; i++)
-            {
-                byte A = Colors[i].A;
-                byte R = Colors[i].R;
-                byte G = Colors[i].G;
-                byte B = Colors[i].B;
-
-                if (blackAlpha)
-                {
-                    if (R < errorValue && G < errorValue && B < errorValue) A = 0;
-                }
-                if (r) A = R;
-                if (g) A = G;
-                if (b) A = B;
-
-                Colors[i] = Color.FromArgb(A, R, G, B);
-            }
-        }
-
-        public void ColorsFix(bool argb_brga, bool blackAlpha, byte errorValue,
-            bool r, bool g, bool b, bool firstСolor, bool lastСolor, int colorMapCount, byte colorMapEntrySize)
-        {
-            if (firstСolor) Colors[0] = Color.FromArgb(0, Colors[0].R, Colors[0].G, Colors[0].B);
-            if (lastСolor)
-            {
-                int index = Colors.Count - 1;
-                Colors[index] = Color.FromArgb(0, Colors[index].R, Colors[index].G, Colors[index].B);
-            }
-            if (argb_brga) ARGB_BGRA(blackAlpha, errorValue, r, g, b);
-            else if (colorMapEntrySize!=31) SetTransparent(blackAlpha, errorValue, r, g, b);
+            if (argb_brga) ARGB_BGRA();
 
             ColorMapCount = colorMapCount;
             ColorMapEntrySize = colorMapEntrySize;
