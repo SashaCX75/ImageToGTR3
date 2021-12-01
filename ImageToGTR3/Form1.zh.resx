@@ -118,10 +118,10 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="button_TgaToPng.Text" xml:space="preserve">
-    <value>将GTR3系列格式转换正常png图像</value>
+    <value>将GT3系列格式转换正常png图像</value>
   </data>
   <data name="button_PngToTga.Text" xml:space="preserve">
-    <value>将正常png图像转换为GTR3系列格式</value>
+    <value>将正常png图像转换为GT3系列格式</value>
   </data>
   <assembly alias="System.Drawing" name="System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
   <data name="$this.Icon" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
