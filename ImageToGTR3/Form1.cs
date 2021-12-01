@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -73,6 +74,7 @@ namespace ImageToGTR3
                 List<string> FileNames = openFileDialog.FileNames.ToList();
                 progressBar1.Value = 0;
                 progressBar1.Maximum = FileNames.Count;
+                string path = "";
                 progressBar1.Visible = true;
                 foreach (String file in FileNames)
                 {
@@ -82,7 +84,7 @@ namespace ImageToGTR3
                         //string fileNameFull = openFileDialog.FileName;
                         string fileNameFull = file;
                         string fileName = Path.GetFileNameWithoutExtension(fileNameFull);
-                        string path = Path.GetDirectoryName(fileNameFull);
+                        path = Path.GetDirectoryName(fileNameFull);
                         //fileName = Path.Combine(path, fileName);
                         int RealWidth = -1;
                         using (var fileStream = File.OpenRead(fileNameFull)) 
@@ -126,6 +128,10 @@ namespace ImageToGTR3
                     }
                 }
                 progressBar1.Visible = false;
+                if (Directory.Exists(path))
+                {
+                    Process.Start(new ProcessStartInfo("explorer.exe", path));
+                }
             }
         }
 
@@ -142,13 +148,18 @@ namespace ImageToGTR3
                 progressBar1.Value = 0;
                 progressBar1.Maximum = FileNames.Count;
                 progressBar1.Visible = true;
+                string fileNameFull = "";
                 foreach (String file in FileNames)
                 {
                     progressBar1.Value++;
-                    string fileNameFull = PngToTga(file);
+                    fileNameFull = PngToTga(file);
                     if (fileNameFull != null) ImageFix(fileNameFull);
                 }
-                progressBar1.Visible = false;
+                progressBar1.Visible = false; 
+                if (Directory.Exists(Path.GetDirectoryName(fileNameFull)))
+                {
+                    Process.Start(new ProcessStartInfo("explorer.exe", Path.GetDirectoryName(fileNameFull)));
+                }
             }
         }
 
