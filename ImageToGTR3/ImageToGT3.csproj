@@ -7,7 +7,7 @@
     <ProjectGuid>{CA7C4C9A-4657-40DA-9EB0-58FC02ACD559}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <RootNamespace>ImageToGTR3</RootNamespace>
-    <AssemblyName>ImageToGTR3</AssemblyName>
+    <AssemblyName>ImageToGT3</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
