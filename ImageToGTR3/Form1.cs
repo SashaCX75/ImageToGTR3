@@ -36,7 +36,12 @@ namespace ImageToGTR3
                     {
                         try
                         {
-                            ImageMagick.MagickImage image = new ImageMagick.MagickImage(file);
+                            ImageMagick.MagickImage image;
+                            using (var fileStream = File.OpenRead(file))
+                            {
+                                image = new ImageMagick.MagickImage(fileStream);
+                            }
+                            //ImageMagick.MagickImage image = new ImageMagick.MagickImage(file);
                             fileNameFull = PngToTga(file);
                             if (fileNameFull != null) ImageFix(fileNameFull);
                         }
@@ -44,6 +49,7 @@ namespace ImageToGTR3
                         {
                             TgaToPng(file);
                         }
+                        //File.Delete(file);
                     }
                 }
                 progressBar1.Visible = false;
@@ -208,11 +214,11 @@ namespace ImageToGTR3
                     image.Composite(Blue, ImageMagick.CompositeOperator.Replace, ImageMagick.Channels.Red);
 
                     //image.ColorType = ImageMagick.ColorType.Palette;
-                    path = Path.Combine(path, "Png");
-                    if (!Directory.Exists(path))
-                    {
-                        Directory.CreateDirectory(path);
-                    }
+                    //path = Path.Combine(path, "Png");
+                    //if (!Directory.Exists(path))
+                    //{
+                    //    Directory.CreateDirectory(path);
+                    //}
                     string newFileName = Path.Combine(path, fileName + ".png");
                     image.Write(newFileName);
                     //Bitmap bitmap = image.ToBitmap();
@@ -352,7 +358,7 @@ namespace ImageToGTR3
                         colorMapList[1] = Color.FromArgb(0, colorMapList[1].R, colorMapList[1].G, colorMapList[1].B);
                     }
                     //File.WriteAllLines(fileName + ".txt", colorMapList);
-                    path = Path.Combine(path, "Fix");
+                    //path = Path.Combine(path, "Fix");
                     if (!Directory.Exists(path))
                     {
                         Directory.CreateDirectory(path);
