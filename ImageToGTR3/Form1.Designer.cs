@@ -65,6 +65,7 @@ namespace ImageToGTR3
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.Name = "Form1";
+            this.Shown += new System.EventHandler(this.Form1_Shown);
             this.ResumeLayout(false);
 
         }
