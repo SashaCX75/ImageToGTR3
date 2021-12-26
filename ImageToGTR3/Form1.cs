@@ -113,53 +113,53 @@ namespace ImageToGTR3
                 {
                     progressBar1.Value++;
                     path = TgaToPng(file);
-                    try
-                    {
-                        //string fileNameFull = openFileDialog.FileName;
-                        string fileNameFull = file;
-                        string fileName = Path.GetFileNameWithoutExtension(fileNameFull);
-                        path = Path.GetDirectoryName(fileNameFull);
-                        //fileName = Path.Combine(path, fileName);
-                        int RealWidth = -1;
-                        using (var fileStream = File.OpenRead(fileNameFull)) 
-                        {
-                            _streamBuffer = new byte[fileStream.Length];
-                            fileStream.Read(_streamBuffer, 0, (int)fileStream.Length);
+                    //try
+                    //{
+                    //    //string fileNameFull = openFileDialog.FileName;
+                    //    string fileNameFull = file;
+                    //    string fileName = Path.GetFileNameWithoutExtension(fileNameFull);
+                    //    path = Path.GetDirectoryName(fileNameFull);
+                    //    //fileName = Path.Combine(path, fileName);
+                    //    int RealWidth = -1;
+                    //    using (var fileStream = File.OpenRead(fileNameFull)) 
+                    //    {
+                    //        _streamBuffer = new byte[fileStream.Length];
+                    //        fileStream.Read(_streamBuffer, 0, (int)fileStream.Length);
 
-                            Header header = new Header(_streamBuffer);
-                            ImageDescription imageDescription = new ImageDescription(_streamBuffer, header.GetImageIDLength());
-                            RealWidth = imageDescription.GetRealWidth();
-                        }
+                    //        Header header = new Header(_streamBuffer);
+                    //        ImageDescription imageDescription = new ImageDescription(_streamBuffer, header.GetImageIDLength());
+                    //        RealWidth = imageDescription.GetRealWidth();
+                    //    }
 
-                        ImageMagick.MagickImage image = new ImageMagick.MagickImage(fileNameFull, ImageMagick.MagickFormat.Tga);
-                        image.Format = ImageMagick.MagickFormat.Png32;
-                        if(RealWidth>0 && RealWidth != image.Width)
-                        {
-                            int height = image.Height;
-                            image = (ImageMagick.MagickImage)image.Clone(RealWidth, height);
-                        }
+                    //    ImageMagick.MagickImage image = new ImageMagick.MagickImage(fileNameFull, ImageMagick.MagickFormat.Tga);
+                    //    image.Format = ImageMagick.MagickFormat.Png32;
+                    //    if(RealWidth>0 && RealWidth != image.Width)
+                    //    {
+                    //        int height = image.Height;
+                    //        image = (ImageMagick.MagickImage)image.Clone(RealWidth, height);
+                    //    }
 
-                        ImageMagick.IMagickImage Blue = image.Separate(ImageMagick.Channels.Blue).First();
-                        ImageMagick.IMagickImage Red = image.Separate(ImageMagick.Channels.Red).First();
-                        image.Composite(Red, ImageMagick.CompositeOperator.Replace, ImageMagick.Channels.Blue);
-                        image.Composite(Blue, ImageMagick.CompositeOperator.Replace, ImageMagick.Channels.Red);
+                    //    ImageMagick.IMagickImage Blue = image.Separate(ImageMagick.Channels.Blue).First();
+                    //    ImageMagick.IMagickImage Red = image.Separate(ImageMagick.Channels.Red).First();
+                    //    image.Composite(Red, ImageMagick.CompositeOperator.Replace, ImageMagick.Channels.Blue);
+                    //    image.Composite(Blue, ImageMagick.CompositeOperator.Replace, ImageMagick.Channels.Red);
 
-                        //image.ColorType = ImageMagick.ColorType.Palette;
-                        path = Path.Combine(path, "Png");
-                        if (!Directory.Exists(path))
-                        {
-                            Directory.CreateDirectory(path);
-                        }
-                        string newFileName = Path.Combine(path, fileName + ".png");
-                        image.Write(newFileName);
-                        //Bitmap bitmap = image.ToBitmap();
-                        //panel1.BackgroundImage = bitmap;
-                    }
-                    catch (Exception exp)
-                    {
-                        MessageBox.Show("Не верный формат исходного файла" + Environment.NewLine +
-                            exp);
-                    }
+                    //    //image.ColorType = ImageMagick.ColorType.Palette;
+                    //    path = Path.Combine(path, "Png");
+                    //    if (!Directory.Exists(path))
+                    //    {
+                    //        Directory.CreateDirectory(path);
+                    //    }
+                    //    string newFileName = Path.Combine(path, fileName + ".png");
+                    //    image.Write(newFileName);
+                    //    //Bitmap bitmap = image.ToBitmap();
+                    //    //panel1.BackgroundImage = bitmap;
+                    //}
+                    //catch (Exception exp)
+                    //{
+                    //    MessageBox.Show("Не верный формат исходного файла" + Environment.NewLine +
+                    //        exp);
+                    //}
                 }
                 progressBar1.Visible = false;
                 if (path.Length > 5 && Directory.Exists(path))
