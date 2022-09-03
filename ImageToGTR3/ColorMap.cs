@@ -69,7 +69,13 @@ namespace ImageToGTR3
                 G = (byte)(G * scale);
                 B = (byte)(B * scale);
 
-                Colors[i] = Color.FromArgb(R, G, B, A);
+#if !GTS_4_mini
+                Colors[i] = Color.FromArgb(R, G, B, A); 
+#endif
+
+#if GTS_4_mini
+                Colors[i] = Color.FromArgb(B, G, R, A);
+#endif
             }
         }
 

@@ -177,12 +177,14 @@ namespace ImageToGTR3
                     path = Path.GetDirectoryName(fileNameFull);
                     //fileName = Path.Combine(path, fileName);
                     int RealWidth = -1;
+                    bool colored = true;
                     using (var fileStream = File.OpenRead(fileNameFull))
                     {
                         _streamBuffer = new byte[fileStream.Length];
                         fileStream.Read(_streamBuffer, 0, (int)fileStream.Length);
 
                         Header header = new Header(_streamBuffer);
+                        if (header.GetColorMapCount() == 0) colored = false;
                         ImageDescription imageDescription = new ImageDescription(_streamBuffer, header.GetImageIDLength());
                         RealWidth = imageDescription.GetRealWidth();
 
@@ -204,8 +206,18 @@ namespace ImageToGTR3
 
                     ImageMagick.IMagickImage Blue = image.Separate(ImageMagick.Channels.Blue).First();
                     ImageMagick.IMagickImage Red = image.Separate(ImageMagick.Channels.Red).First();
+                    ImageMagick.IMagickImage Alpha = image.Separate(ImageMagick.Channels.Red).First();
+#if !GTS_4_mini
                     image.Composite(Red, ImageMagick.CompositeOperator.Replace, ImageMagick.Channels.Blue);
-                    image.Composite(Blue, ImageMagick.CompositeOperator.Replace, ImageMagick.Channels.Red);
+                    image.Composite(Blue, ImageMagick.CompositeOperator.Replace, ImageMagick.Channels.Red); 
+#endif
+                    if (!colored)
+                    //if (!colored)
+                    {
+                        //image.Negate();
+                        image.Composite(Alpha, ImageMagick.CompositeOperator.CopyAlpha, ImageMagick.Channels.Alpha);
+                        //image.Negate();
+                    }
 
                     //image.ColorType = ImageMagick.ColorType.Palette;
                     path = Path.Combine(path, "Png");
@@ -282,6 +294,7 @@ namespace ImageToGTR3
                     ImageWidth = image.Width;
                     int newWidth = ImageWidth;
                     int newHeight = image.Height;
+#if !GTS_4_mini
                     while (newWidth % 16 != 0)
                     {
                         newWidth++;
@@ -296,7 +309,8 @@ namespace ImageToGTR3
                         gfx.DrawImage(bitmap, 0, 0, bitmap.Width, bitmap.Height);
                         image = new ImageMagick.MagickImage(bitmapNew);
                         image_temp = new ImageMagick.MagickImage(bitmapNew);
-                    }
+                    } 
+#endif
                     ImageMagick.Pixel pixel = image.GetPixels().GetPixel(0, 0);
                     //pixel = new ImageMagick.Pixel(0, 0, 4);
                     bool transparent = false;
