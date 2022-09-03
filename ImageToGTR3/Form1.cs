@@ -40,7 +40,7 @@ namespace ImageToGTR3
                             fileNameFull = PngToTga(file);
                             if (fileNameFull != null) ImageFix(fileNameFull);
                         }
-                        catch (Exception)
+                        catch (Exception e)
                         {
                             TgaToPng(file);
                         }
@@ -107,7 +107,7 @@ namespace ImageToGTR3
                 {
                     progressBar1.Value++;
                     path = TgaToPng(file);
-                    try
+                    /*try
                     {
                         //string fileNameFull = openFileDialog.FileName;
                         string fileNameFull = file;
@@ -153,7 +153,7 @@ namespace ImageToGTR3
                     {
                         MessageBox.Show("Не верный формат исходного файла" + Environment.NewLine +
                             exp);
-                    }
+                    }*/
                 }
                 progressBar1.Visible = false;
                 if (path.Length > 5 && Directory.Exists(path))
